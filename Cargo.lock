@@ -241,7 +241,7 @@ dependencies = [
 
 [[package]]
 name = "bn254"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ark-bn254",
  "ark-ec",
@@ -300,9 +300,9 @@ dependencies = [
 
 [[package]]
 name = "commonware-codec"
-version = "0.0.48"
+version = "0.0.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0992c93cb2ec8c3777c1c53209dc360551e439a22ed9f076e2c811a09c0ad98"
+checksum = "52ff0994a50e73a8b8738020614340a25df5edf8b3b1b0b874b5ec8c60295e44"
 dependencies = [
  "bytes",
  "paste",
@@ -311,9 +311,9 @@ dependencies = [
 
 [[package]]
 name = "commonware-cryptography"
-version = "0.0.48"
+version = "0.0.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b2ff10019d70904c28aa6ee6c2a111459f5824d62ffdffe6408f0cf21ec0027"
+checksum = "d0ade135f1071a9bfb71fc4d3788b91a572bccc26341eaf90d45fe376d5709f0"
 dependencies = [
  "blst",
  "bytes",
@@ -331,9 +331,9 @@ dependencies = [
 
 [[package]]
 name = "commonware-utils"
-version = "0.0.48"
+version = "0.0.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d49461f3ff0fa695698bb911697e593c2fbd3bee6ca2c922d88e9b5fbc50f63f"
+checksum = "7d8e3b8335c6030fd138a0d99a0f40990ab0b657c14f7fcd86f5b353f32ac38c"
 dependencies = [
  "bytes",
  "commonware-codec",

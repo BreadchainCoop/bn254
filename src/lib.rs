@@ -143,6 +143,8 @@ impl Write for PrivateKey {
 }
 
 impl Read for PrivateKey {
+    type Cfg = ();
+
     fn read_cfg(buf: &mut impl Buf, _cfg: &()) -> Result<Self, Error> {
         let mut raw = <[u8; PRIVATE_KEY_LENGTH]>::read_cfg(buf, &())?;
         let dst: &[u8] = &mut raw;
@@ -247,6 +249,8 @@ impl Write for PublicKey {
 }
 
 impl Read for PublicKey {
+    type Cfg = ();
+
     fn read_cfg(buf: &mut impl Buf, _cfg: &()) -> Result<Self, Error> {
         let mut raw = <[u8; PUBLIC_KEY_LENGTH]>::read_cfg(buf, &())?;
         let dst: &[u8] = &mut raw;
@@ -352,6 +356,8 @@ impl Write for Signature {
 }
 
 impl Read for Signature {
+    type Cfg = ();
+
     fn read_cfg(buf: &mut impl Buf, _cfg: &()) -> Result<Self, Error> {
         let mut raw = <[u8; SIGNATURE_LENGTH]>::read_cfg(buf, &())?;
         let dst: &[u8] = &mut raw;
@@ -458,6 +464,8 @@ impl Write for G1PublicKey {
 }
 
 impl Read for G1PublicKey {
+    type Cfg = ();
+
     fn read_cfg(buf: &mut impl Buf, _cfg: &()) -> Result<Self, Error> {
         let mut raw = <[u8; G1_LENGTH]>::read_cfg(buf, &())?;
         let dst: &[u8] = &mut raw;
