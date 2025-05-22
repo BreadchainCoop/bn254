@@ -1,9 +1,10 @@
-use ark_bn254::{Fr as Scalar, G1Affine, G1Projective, G2Affine, G2Projective};
+use ark_bn254::{Fr as Scalar, G1Affine, G1Projective, G2Affine, G2Projective, Fq, Fq2};
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup, PrimeGroup};
 use ark_ff::{AdditiveGroup, UniformRand};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use commonware_cryptography::{Hasher as _, Sha256, Signer, Specification, Verifier};
 use eigen_crypto_bn254::utils::map_to_curve;
+use std::str::FromStr;
 
 use commonware_codec::{Error, FixedSize, Read, Write};
 use commonware_utils::{array::Array, hex, union_unique};
@@ -337,6 +338,26 @@ impl Display for PublicKey {
     }
 }
 
+impl PublicKey {
+    pub fn create_from_g2_coordinates(x1: &str, x2: &str, y1: &str, y2: &str) -> Option<Self> {
+        // Convert string coordinates to Fq elements
+        let x1_fq = Fq::from_str(x1).ok()?;
+        let x2_fq = Fq::from_str(x2).ok()?;
+        let y1_fq = Fq::from_str(y1).ok()?;
+        let y2_fq = Fq::from_str(y2).ok()?;
+        
+        // Create Fq2 elements for G2
+        let x_fq2 = Fq2::new(x1_fq, x2_fq);
+        let y_fq2 = Fq2::new(y1_fq, y2_fq);
+        
+        // Create G2 point from coordinates
+        let g2_point = G2Affine::new_unchecked(x_fq2, y_fq2);
+        
+        // Convert to PublicKey
+        Some(PublicKey::from(g2_point))
+    }
+}
+
 #[derive(Clone, Eq, PartialEq)]
 pub struct Signature {
     raw: [u8; SIGNATURE_LENGTH],
@@ -510,6 +531,31 @@ impl From<G1Affine> for G1PublicKey {
         let mut raw = [0u8; G1_LENGTH];
         key.serialize_compressed(&mut raw[..]).unwrap();
         Self { raw, key }
+    }
+}
+
+impl G1PublicKey {
+    pub fn create_from_g1_coordinates(x: &str, y: &str) -> Option<Self> {
+        let x_fq = Fq::from_str(x).ok()?;
+        let y_fq = Fq::from_str(y).ok()?;
+        let g1_affine = G1Affine::new_unchecked(x_fq, y_fq);
+        let g1_pub_key = G1PublicKey::from(g1_affine);
+        Some(g1_pub_key)
+    }
+
+    /// Returns the x-coordinate of the G1 point as a string
+    pub fn get_x(&self) -> String {
+        self.key.x.to_string()
+    }
+
+    /// Returns the y-coordinate of the G1 point as a string
+    pub fn get_y(&self) -> String {
+        self.key.y.to_string()
+    }
+
+    /// Returns the raw G1Affine point
+    pub fn get_point(&self) -> G1Affine {
+        self.key
     }
 }
 
