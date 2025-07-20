@@ -1,8 +1,10 @@
-use ark_bn254::{Fr as Scalar, G1Affine, G1Projective, G2Affine, G2Projective, Fq, Fq2};
+use ark_bn254::{Fq, Fq2, Fr as Scalar, G1Affine, G1Projective, G2Affine, G2Projective};
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup, PrimeGroup};
-use ark_ff::{AdditiveGroup, UniformRand};
+use ark_ff::AdditiveGroup;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
-use commonware_cryptography::{Hasher as _, Sha256, Signer, Specification, Verifier};
+use commonware_cryptography::{
+    Hasher as _, PublicKey as CPublicKey, Sha256, Signature as CSignature, Signer, Verifier,
+};
 use eigen_crypto_bn254::utils::map_to_curve;
 use std::str::FromStr;
 
@@ -11,7 +13,6 @@ use commonware_utils::{array::Array, hex, union_unique};
 //use eigen_crypto_bn254::utils::map_to_curve;
 use bytes::buf::BufMut;
 use bytes::Buf;
-use rand::{CryptoRng, Rng};
 use std::{
     borrow::Cow,
     fmt::{Debug, Display},
@@ -33,41 +34,11 @@ pub struct Bn254 {
     public: G2Affine,
 }
 
-impl Specification for Bn254 {
-    type PublicKey = PublicKey;
-    type Signature = Signature;
-}
-
 impl Signer for Bn254 {
-    type PrivateKey = PrivateKey;
+    type Signature = Signature;
+    type PublicKey = PublicKey;
 
-    fn new<R: CryptoRng + Rng>(r: &mut R) -> Self {
-        let sk = Scalar::rand(r);
-        let pk = G2Projective::generator() * sk;
-        Self {
-            private: sk,
-            public: pk.into_affine(),
-        }
-    }
-
-    fn from(private_key: PrivateKey) -> Option<Self> {
-        let sk = private_key.key;
-        let pk = G2Projective::generator() * sk;
-        Some(Self {
-            private: sk,
-            public: pk.into_affine(),
-        })
-    }
-
-    fn private_key(&self) -> PrivateKey {
-        PrivateKey::from(self.private)
-    }
-
-    fn public_key(&self) -> PublicKey {
-        PublicKey::from(self.public)
-    }
-
-    fn sign(&mut self, namespace: Option<&[u8]>, message: &[u8]) -> Signature {
+    fn sign(&self, namespace: Option<&[u8]>, message: &[u8]) -> Signature {
         // Generate payload
         let hash: [u8; DIGEST_LENGTH] = if namespace.is_none() && message.len() == DIGEST_LENGTH {
             message.try_into().unwrap()
@@ -92,15 +63,16 @@ impl Signer for Bn254 {
         // Serialize signature
         Signature::from(sig)
     }
+
+    fn public_key(&self) -> PublicKey {
+        PublicKey::from(self.public)
+    }
 }
 
 impl Verifier for Bn254 {
-    fn verify(
-        namespace: Option<&[u8]>,
-        message: &[u8],
-        public_key: &PublicKey,
-        signature: &Signature,
-    ) -> bool {
+    type Signature = Signature;
+
+    fn verify(&self, namespace: Option<&[u8]>, message: &[u8], signature: &Signature) -> bool {
         // Generate payload
         let hash: [u8; DIGEST_LENGTH] = if namespace.is_none() && message.len() == DIGEST_LENGTH {
             message.try_into().unwrap()
@@ -119,7 +91,7 @@ impl Verifier for Bn254 {
         let msg_on_g1 = map_to_curve(&hash);
 
         // Pairing check
-        let lhs = ark_bn254::Bn254::pairing(msg_on_g1, public_key.key);
+        let lhs = ark_bn254::Bn254::pairing(msg_on_g1, self.public);
         let rhs = ark_bn254::Bn254::pairing(signature.sig, G2Affine::generator());
         lhs == rhs
     }
@@ -338,6 +310,36 @@ impl Display for PublicKey {
     }
 }
 
+impl Verifier for PublicKey {
+    type Signature = Signature;
+
+    fn verify(&self, namespace: Option<&[u8]>, message: &[u8], signature: &Signature) -> bool {
+        // Generate payload
+        let hash: [u8; DIGEST_LENGTH] = if namespace.is_none() && message.len() == DIGEST_LENGTH {
+            message.try_into().unwrap()
+        } else {
+            let payload = match namespace {
+                Some(namespace) => Cow::Owned(union_unique(namespace, message)),
+                None => Cow::Borrowed(message),
+            };
+            let mut hasher = Sha256::new();
+            hasher.update(payload.as_ref());
+            let hash = hasher.finalize();
+            hash.as_ref().try_into().unwrap()
+        };
+
+        // Map to curve
+        let msg_on_g1 = map_to_curve(&hash);
+
+        // Pairing check
+        let lhs = ark_bn254::Bn254::pairing(msg_on_g1, self.key);
+        let rhs = ark_bn254::Bn254::pairing(signature.sig, G2Affine::generator());
+        lhs == rhs
+    }
+}
+
+impl CPublicKey for PublicKey {}
+
 impl PublicKey {
     pub fn create_from_g2_coordinates(x1: &str, x2: &str, y1: &str, y2: &str) -> Option<Self> {
         // Convert string coordinates to Fq elements
@@ -345,14 +347,14 @@ impl PublicKey {
         let x2_fq = Fq::from_str(x2).ok()?;
         let y1_fq = Fq::from_str(y1).ok()?;
         let y2_fq = Fq::from_str(y2).ok()?;
-        
+
         // Create Fq2 elements for G2
         let x_fq2 = Fq2::new(x1_fq, x2_fq);
         let y_fq2 = Fq2::new(y1_fq, y2_fq);
-        
+
         // Create G2 point from coordinates
         let g2_point = G2Affine::new_unchecked(x_fq2, y_fq2);
-        
+
         // Convert to PublicKey
         Some(PublicKey::from(g2_point))
     }
@@ -464,6 +466,8 @@ impl Display for Signature {
         write!(f, "{}", hex(&self.raw))
     }
 }
+
+impl CSignature for Signature {}
 
 // TODO: cleanup handling of G1 vs G2 public keys (+ unify with signature)
 #[derive(Clone, Eq, PartialEq)]
@@ -650,8 +654,12 @@ pub fn aggregate_verify(
         agg_public += public.key.into_group();
     }
     let agg_public = agg_public.into_affine();
-    let public = PublicKey::from(agg_public);
+    let _public = PublicKey::from(agg_public);
 
     // Verify signature
-    Bn254::verify(namespace, message, &public, signature)
+    let verifier = Bn254 {
+        private: Scalar::ZERO, // dummy value for verification
+        public: agg_public,
+    };
+    verifier.verify(namespace, message, signature)
 }
