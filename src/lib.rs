@@ -602,12 +602,7 @@ impl Display for G1PublicKey {
     }
 }
 
-impl Bn254 {
-    pub fn public_g1(&self) -> G1PublicKey {
-        let pk = G1Projective::generator() * self.private;
-        G1PublicKey::from(pk.into_affine())
-    }
-}
+
 
 pub fn get_points(
     g1: &[G1PublicKey],
@@ -662,4 +657,40 @@ pub fn aggregate_verify(
         public: agg_public,
     };
     verifier.verify(namespace, message, signature)
+}
+impl Bn254 {
+    pub fn new(private_key: PrivateKey) -> Result<Self, Error> {
+        let public_g2 = (ark_bn254::G2Projective::generator() * private_key.key).into_affine();
+        Ok(Bn254 {
+            private: private_key.key,
+            public: public_g2,
+        })
+    }
+
+    // Alternative constructor from scalar directly
+    pub fn from_scalar(scalar: Scalar) -> Self {
+        let public_g2 = (ark_bn254::G2Projective::generator() * scalar).into_affine();
+        Bn254 {
+            private: scalar,
+            public: public_g2,
+        }
+    }
+
+    pub fn public_g1(&self) -> G1PublicKey {
+        let pk = G1Projective::generator() * self.private;
+        G1PublicKey::from(pk.into_affine())
+    }
+}
+
+
+pub fn get_signer_from_fr(key: &str) -> Bn254 {
+    let fr = Scalar::from_str(key).expect("Invalid decimal string for private key");
+    let key = PrivateKey::from(fr);
+    Bn254::new(key).expect("Failed to create signer")
+}
+
+pub fn get_signer(key: &str) -> Bn254 {
+    let fr = Scalar::from_str(key).expect("Invalid decimal string for private key");
+    let key = PrivateKey::from(fr);
+    Bn254::new(key).expect("Failed to create signer")
 }
