@@ -186,6 +186,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "arrayref"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76a2e8124351fda1ef8aaaa3bbd7ebbcb486bbcd4225aca0aa0d84bb2db8fecb"
+
+[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -208,6 +214,19 @@ name = "base64ct"
 version = "1.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89e25b6adfb930f02d1981565a6e5d9c547ac15a96606256d3b59040e5cd4ca3"
+
+[[package]]
+name = "blake3"
+version = "1.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3888aaa89e4b2a40fca9848e400f6a658a5a3978de7be858e209cafa8be9a4a0"
+dependencies = [
+ "arrayref",
+ "arrayvec",
+ "cc",
+ "cfg-if",
+ "constant_time_eq",
+]
 
 [[package]]
 name = "block-buffer"
@@ -300,9 +319,9 @@ dependencies = [
 
 [[package]]
 name = "commonware-codec"
-version = "0.0.50"
+version = "0.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52ff0994a50e73a8b8738020614340a25df5edf8b3b1b0b874b5ec8c60295e44"
+checksum = "7c1495b0aef5282425702984c382ab7499bb4b4b4b03f68702b55f1a9e330253"
 dependencies = [
  "bytes",
  "paste",
@@ -311,10 +330,11 @@ dependencies = [
 
 [[package]]
 name = "commonware-cryptography"
-version = "0.0.50"
+version = "0.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0ade135f1071a9bfb71fc4d3788b91a572bccc26341eaf90d45fe376d5709f0"
+checksum = "44d70336ad273f7c64a95076292be717ed21543bb484300c707da3fe85d80517"
 dependencies = [
+ "blake3",
  "blst",
  "bytes",
  "commonware-codec",
@@ -331,13 +351,15 @@ dependencies = [
 
 [[package]]
 name = "commonware-utils"
-version = "0.0.50"
+version = "0.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d8e3b8335c6030fd138a0d99a0f40990ab0b657c14f7fcd86f5b353f32ac38c"
+checksum = "a54dfd09f06c05634bfad9c7f9a1218d085c96b87db0d6c6d39c06dc30c91af4"
 dependencies = [
  "bytes",
  "commonware-codec",
  "futures",
+ "getrandom",
+ "rand",
  "thiserror 2.0.12",
 ]
 
@@ -346,6 +368,12 @@ name = "const-oid"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
+
+[[package]]
+name = "constant_time_eq"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7c74b8349d32d297c9134b8c88677813a227df8f779daa29bfc29c183fe3dca6"
 
 [[package]]
 name = "cpufeatures"
