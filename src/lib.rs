@@ -9,7 +9,7 @@ use eigen_crypto_bn254::utils::map_to_curve;
 use std::str::FromStr;
 
 use commonware_codec::{Error, FixedSize, Read, Write};
-use commonware_utils::{array::Array, hex, union_unique};
+use commonware_utils::{hex, union_unique, Array, Span};
 //use eigen_crypto_bn254::utils::map_to_curve;
 use bytes::buf::BufMut;
 use bytes::Buf;
@@ -102,6 +102,8 @@ pub struct PrivateKey {
     raw: [u8; PRIVATE_KEY_LENGTH],
     key: Scalar,
 }
+
+impl Span for PrivateKey {}
 
 impl Array for PrivateKey {}
 
@@ -208,6 +210,8 @@ pub struct PublicKey {
     raw: [u8; PUBLIC_KEY_LENGTH],
     key: G2Affine,
 }
+
+impl Span for PublicKey {}
 
 impl Array for PublicKey {}
 
@@ -366,6 +370,8 @@ pub struct Signature {
     sig: G1Affine,
 }
 
+impl Span for Signature {}
+
 impl Array for Signature {}
 
 impl FixedSize for Signature {
@@ -475,6 +481,8 @@ pub struct G1PublicKey {
     raw: [u8; G1_LENGTH],
     key: G1Affine,
 }
+
+impl Span for G1PublicKey {}
 
 impl Array for G1PublicKey {}
 
@@ -602,8 +610,6 @@ impl Display for G1PublicKey {
     }
 }
 
-
-
 pub fn get_points(
     g1: &[G1PublicKey],
     g2: &[PublicKey],
@@ -681,7 +687,6 @@ impl Bn254 {
         G1PublicKey::from(pk.into_affine())
     }
 }
-
 
 pub fn get_signer_from_fr(key: &str) -> Bn254 {
     let fr = Scalar::from_str(key).expect("Invalid decimal string for private key");
